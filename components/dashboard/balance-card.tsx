@@ -1,8 +1,23 @@
 "use client"
 
 import { TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { useAppPreferences } from "@/components/providers/app-preferences-provider"
 
-export function BalanceCard() {
+type BalanceCardProps = {
+  balance?: number
+  income?: number
+  expenses?: number
+  changeLabel?: string
+}
+
+export function BalanceCard({
+  balance = 0,
+  income = 0,
+  expenses = 0,
+  changeLabel = "Add transactions to see the month-over-month trend",
+}: BalanceCardProps) {
+  const { formatCurrency } = useAppPreferences()
+
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6 border border-primary/30">
       {/* Glow effect */}
@@ -14,7 +29,7 @@ export function BalanceCard() {
           <div>
             <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
             <h2 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
-              $47,852.39
+              {formatCurrency(balance)}
             </h2>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary">
@@ -29,7 +44,7 @@ export function BalanceCard() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Income</p>
-              <p className="text-sm font-semibold text-foreground">+$12,450</p>
+              <p className="text-sm font-semibold text-foreground">+{formatCurrency(income)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -38,17 +53,13 @@ export function BalanceCard() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Expenses</p>
-              <p className="text-sm font-semibold text-foreground">-$8,230</p>
+              <p className="text-sm font-semibold text-foreground">-{formatCurrency(expenses)}</p>
             </div>
           </div>
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-chart-1/20 px-2 py-0.5 text-xs font-medium text-chart-1">
-            <TrendingUp className="mr-1 h-3 w-3" />
-            +12.5%
-          </span>
-          <span className="text-xs text-muted-foreground">vs last month</span>
+          <span className="text-xs text-muted-foreground">{changeLabel}</span>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   ArrowLeft,
   DollarSign,
@@ -10,42 +10,22 @@ import {
   FileText,
   CreditCard,
   Tag,
-  ShoppingBag,
-  Home,
-  Car,
-  Utensils,
-  Gamepad2,
-  Briefcase,
-  Heart,
-  Zap,
   Check,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useAppPreferences } from "@/components/providers/app-preferences-provider"
+import {
+  expenseCategories,
+  findPaymentLabel,
+  findTransactionCategoryLabel,
+  incomeCategories,
+  paymentModes,
+} from "@/lib/transaction-options"
 import { cn } from "@/lib/utils"
 import type { PageType } from "@/components/main-app"
-
-const categories = [
-  { id: "shopping", label: "Shopping", icon: ShoppingBag, color: "bg-chart-4/20 text-chart-4 border-chart-4/30" },
-  { id: "housing", label: "Housing", icon: Home, color: "bg-primary/20 text-primary border-primary/30" },
-  { id: "transport", label: "Transport", icon: Car, color: "bg-chart-3/20 text-chart-3 border-chart-3/30" },
-  { id: "food", label: "Food", icon: Utensils, color: "bg-chart-2/20 text-chart-2 border-chart-2/30" },
-  { id: "entertainment", label: "Entertainment", icon: Gamepad2, color: "bg-chart-5/20 text-chart-5 border-chart-5/30" },
-  { id: "income", label: "Income", icon: Briefcase, color: "bg-chart-1/20 text-chart-1 border-chart-1/30" },
-  { id: "health", label: "Health", icon: Heart, color: "bg-destructive/20 text-destructive border-destructive/30" },
-  { id: "utilities", label: "Utilities", icon: Zap, color: "bg-muted text-muted-foreground border-muted-foreground/30" },
-]
-
-const paymentModes = [
-  { id: "cash", label: "Cash" },
-  { id: "credit", label: "Credit Card" },
-  { id: "debit", label: "Debit Card" },
-  { id: "bank", label: "Bank Transfer" },
-  { id: "paypal", label: "PayPal" },
-  { id: "upi", label: "UPI" },
-]
 
 interface AddTransactionPageProps {
   onNavigate: (page: PageType) => void
@@ -54,32 +34,75 @@ interface AddTransactionPageProps {
 export function AddTransactionPage({ onNavigate }: AddTransactionPageProps) {
   const [type, setType] = useState<"expense" | "income">("expense")
   const [amount, setAmount] = useState("")
+  const [description, setDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedPayment, setSelectedPayment] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const { addNotification, formatCurrency } = useAppPreferences()
+
+  const categories = type === "income" ? incomeCategories : expenseCategories
+
+  useEffect(() => {
+    if (!categories.some((category) => category.id === selectedCategory)) {
+      setSelectedCategory("")
+    }
+  }, [categories, selectedCategory])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!amount || !selectedCategory || !description.trim() || !selectedPayment) return
+    
     setIsSubmitting(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setIsSubmitting(false)
-    setShowSuccess(true)
-    
-    // Reset form after showing success
-    setTimeout(() => {
-      setShowSuccess(false)
-      setAmount("")
-      setSelectedCategory("")
-      setSelectedPayment("")
-      setNotes("")
-      setDate(new Date().toISOString().split("T")[0])
-    }, 2000)
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: parseFloat(amount),
+          description: description.trim(),
+          category: findTransactionCategoryLabel(selectedCategory),
+          type,
+          date,
+          notes,
+          paymentMode: findPaymentLabel(selectedPayment),
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to add transaction")
+
+      addNotification({
+        title: "Transaction added",
+        description: `${description.trim()} was saved for ${formatCurrency(Number(amount))}.`,
+        kind: type === "income" ? "success" : "info",
+      })
+
+      setShowSuccess(true)
+      
+      // Reset form after showing success
+      setTimeout(() => {
+        setShowSuccess(false)
+        setAmount("")
+        setDescription("")
+        setSelectedCategory("")
+        setSelectedPayment("")
+        setNotes("")
+        setDate(new Date().toISOString().split("T")[0])
+        onNavigate("dashboard")
+      }, 2000)
+    } catch (error) {
+      console.error("Error adding transaction:", error)
+      addNotification({
+        title: "Transaction failed",
+        description: "The transaction could not be saved. Please try again.",
+        kind: "error",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (showSuccess) {
@@ -164,6 +187,21 @@ export function AddTransactionPage({ onNavigate }: AddTransactionPageProps) {
               required
             />
           </div>
+        </div>
+
+        <div className="rounded-xl border border-border/50 bg-card p-4">
+          <Label htmlFor="description" className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Description
+          </Label>
+          <Input
+            id="description"
+            placeholder={type === "income" ? "Salary payment, freelance invoice, bonus..." : "Groceries, rent, software subscription..."}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className="h-12 bg-secondary/30 border-border/50"
+            required
+          />
         </div>
 
         {/* Category */}
@@ -251,7 +289,7 @@ export function AddTransactionPage({ onNavigate }: AddTransactionPageProps) {
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isSubmitting || !amount || !selectedCategory || !selectedPayment}
+          disabled={isSubmitting || !amount || !description.trim() || !selectedCategory || !selectedPayment}
           className={cn(
             "w-full h-14 text-lg font-semibold transition-all",
             "bg-primary hover:bg-primary/90 text-primary-foreground",

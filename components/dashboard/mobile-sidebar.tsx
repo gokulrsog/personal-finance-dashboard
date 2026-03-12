@@ -3,6 +3,7 @@
 import React from "react"
 
 import { useEffect } from "react"
+import { signOut } from "next-auth/react"
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -11,6 +12,7 @@ import {
   BarChart3,
   Target,
   FileText,
+  Users,
   Settings,
   HelpCircle,
   X,
@@ -27,6 +29,7 @@ const navItems: { icon: React.ElementType; label: string; page: PageType }[] = [
   { icon: BarChart3, label: "Analytics", page: "analytics" },
   { icon: Target, label: "Goals", page: "goals" },
   { icon: FileText, label: "Reports", page: "reports" },
+  { icon: Users, label: "Creators", page: "creators" },
 ]
 
 interface MobileSidebarProps {
@@ -37,6 +40,10 @@ interface MobileSidebarProps {
 }
 
 export function MobileSidebar({ open, onClose, currentPage, onNavigate }: MobileSidebarProps) {
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" })
+  }
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden"
@@ -70,10 +77,10 @@ export function MobileSidebar({ open, onClose, currentPage, onNavigate }: Mobile
         <div className="flex items-center justify-between p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-[0_0_20px_rgba(74,222,128,0.3)]">
-              F
+              W
             </div>
             <span className="text-xl font-semibold text-sidebar-foreground">
-              FinTrack
+              Wealth Track
             </span>
           </div>
           <button
@@ -120,11 +127,22 @@ export function MobileSidebar({ open, onClose, currentPage, onNavigate }: Mobile
             <Settings className={cn("h-5 w-5 flex-shrink-0", currentPage === "settings" && "text-primary")} />
             <span>Settings</span>
           </button>
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors">
+          <button
+            onClick={() => onNavigate("help")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
+              currentPage === "help"
+                ? "bg-sidebar-accent text-sidebar-primary"
+                : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            )}
+          >
             <HelpCircle className="h-5 w-5 flex-shrink-0" />
             <span>Help</span>
           </button>
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors">
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+          >
             <LogOut className="h-5 w-5 flex-shrink-0" />
             <span>Log out</span>
           </button>

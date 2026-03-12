@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User model
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String
+  avatar    String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  transactions Transaction[]
+  budgets      Budget[]
+  goals        Goal[]
+  chatMessages ChatMessage[]
+
+  @@index([email])
+}
+
+// Transaction model
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount      Float
+  description String
+  category    String
+  type        String   @default("expense") // "income" or "expense"
+  date        DateTime
+  notes       String?
+  paymentMode String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([date])
+  @@index([category])
+}
+
+// Budget model
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  category  String
+  budget    Float
+  spent     Float    @default(0)
+  month     DateTime
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, category, month])
+  @@index([userId])
+}
+
+// Goal model
+model Goal {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name          String
+  description   String?
+  targetAmount  Float
+  currentAmount Float   @default(0)
+  dueDate       DateTime?
+  category      String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Chat Messages for AI assistant
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  role      String   // "user" or "assistant"
+  content   String
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

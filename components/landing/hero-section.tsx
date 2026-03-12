@@ -1,42 +1,12 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 
 import { useState, useEffect } from "react"
 import { ArrowRight, TrendingUp, Wallet, PiggyBank, BarChart3, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-
-function AnimatedCounter({ target, duration = 2000, prefix = "", suffix = "" }: { target: number; duration?: number; prefix?: string; suffix?: string }) {
-  const [count, setCount] = useState(0)
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 500)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    if (!isVisible) return
-    
-    let startTime: number
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp
-      const progress = Math.min((timestamp - startTime) / duration, 1)
-      setCount(Math.floor(progress * target))
-      if (progress < 1) {
-        requestAnimationFrame(step)
-      }
-    }
-    requestAnimationFrame(step)
-  }, [isVisible, target, duration])
-
-  return (
-    <span className="tabular-nums">
-      {prefix}{count.toLocaleString()}{suffix}
-    </span>
-  )
-}
 
 function FloatingIcon({ icon: Icon, className, delay = 0 }: { icon: React.ElementType; className?: string; delay?: number }) {
   const [mounted, setMounted] = useState(false)
@@ -61,14 +31,25 @@ function FloatingIcon({ icon: Icon, className, delay = 0 }: { icon: React.Elemen
 }
 
 interface HeroSectionProps {
-  onEnterApp: () => void
+  onEnterApp?: () => void
+  primaryHref?: string
+  primaryLabel?: string
+  secondaryHref?: string
+  secondaryLabel?: string
 }
 
-export function HeroSection({ onEnterApp }: HeroSectionProps) {
+export function HeroSection({
+  onEnterApp,
+  primaryHref,
+  primaryLabel = "Get Started",
+  secondaryHref,
+  secondaryLabel = "Log In",
+}: HeroSectionProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    const timer = window.setTimeout(() => setMounted(true), 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   return (
@@ -126,31 +107,17 @@ export function HeroSection({ onEnterApp }: HeroSectionProps) {
           and AI-powered recommendations. Your journey to financial freedom starts here.
         </p>
 
-        {/* Stats */}
+        {/* Trust line */}
         <div
           className={cn(
-            "grid grid-cols-3 gap-8 max-w-lg mx-auto mb-12 transition-all duration-700 delay-300",
+            "mx-auto mb-12 max-w-2xl rounded-2xl border border-border/60 bg-secondary/30 px-6 py-5 text-center backdrop-blur-sm transition-all duration-700 delay-300",
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}
         >
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-foreground">
-              <AnimatedCounter target={50} suffix="K+" />
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">Active Users</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-foreground">
-              <AnimatedCounter target={2} prefix="$" suffix="M+" />
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">Tracked Daily</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-foreground">
-              <AnimatedCounter target={99} suffix="%" />
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">Satisfaction</div>
-          </div>
+          <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Wealth Track gives you a calm, private space to understand your money,
+            build better habits, and make confident decisions every day.
+          </p>
         </div>
 
         {/* CTA Button */}
@@ -160,14 +127,40 @@ export function HeroSection({ onEnterApp }: HeroSectionProps) {
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}
         >
-          <Button
-            onClick={onEnterApp}
-            size="lg"
-            className="group relative px-8 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-[0_0_30px_rgba(74,222,128,0.3)] hover:shadow-[0_0_40px_rgba(74,222,128,0.4)] transition-all duration-300"
-          >
-            Get Started
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {primaryHref ? (
+              <Button
+                asChild
+                size="lg"
+                className="group relative px-8 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-[0_0_30px_rgba(74,222,128,0.3)] hover:shadow-[0_0_40px_rgba(74,222,128,0.4)] transition-all duration-300"
+              >
+                <Link href={primaryHref}>
+                  {primaryLabel}
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                onClick={onEnterApp}
+                size="lg"
+                className="group relative px-8 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-[0_0_30px_rgba(74,222,128,0.3)] hover:shadow-[0_0_40px_rgba(74,222,128,0.4)] transition-all duration-300"
+              >
+                {primaryLabel}
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            )}
+
+            {secondaryHref ? (
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="px-8 py-6 text-lg font-semibold rounded-xl border-border/60 bg-secondary/40 text-foreground backdrop-blur-sm"
+              >
+                <Link href={secondaryHref}>{secondaryLabel}</Link>
+              </Button>
+            ) : null}
+          </div>
           <p className="text-sm text-muted-foreground mt-4">Free to use. No credit card required.</p>
         </div>
       </div>

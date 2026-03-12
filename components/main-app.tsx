@@ -11,9 +11,11 @@ import { BudgetsPage } from "@/components/pages/budgets-page"
 import { AnalyticsPage } from "@/components/pages/analytics-page"
 import { GoalsPage } from "@/components/pages/goals-page"
 import { ReportsPage } from "@/components/pages/reports-page"
+import { CreatorsPage } from "@/components/pages/creators-page"
 import { SettingsPage } from "@/components/pages/settings-page"
+import { HelpPage } from "@/components/pages/help-page"
 
-export type PageType = "dashboard" | "transactions" | "add" | "budgets" | "analytics" | "goals" | "reports" | "settings"
+export type PageType = "dashboard" | "transactions" | "add" | "budgets" | "analytics" | "goals" | "reports" | "creators" | "settings" | "help"
 
 export function MainApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -35,8 +37,12 @@ export function MainApp() {
         return <GoalsPage />
       case "reports":
         return <ReportsPage />
+      case "creators":
+        return <CreatorsPage />
       case "settings":
         return <SettingsPage />
+      case "help":
+        return <HelpPage onNavigate={setCurrentPage} />
       default:
         return <DashboardPage onNavigate={setCurrentPage} />
     }
@@ -60,7 +66,7 @@ export function MainApp() {
 
       {/* Main Content */}
       <div className="lg:pl-64">
-        <Header onMenuClick={() => setMobileMenuOpen(true)} />
+        <Header currentPage={currentPage} onNavigate={setCurrentPage} onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="p-4 sm:p-6 animate-in fade-in duration-300">
           {renderPage()}
         </main>

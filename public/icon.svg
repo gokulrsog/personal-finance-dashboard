@@ -1,26 +1,38 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    @media (prefers-color-scheme: light) {
-      .background { fill: black; }
-      .foreground { fill: white; }
-    }
-    @media (prefers-color-scheme: dark) {
-      .background { fill: white; }
-      .foreground { fill: black; }
-    }
-  </style>
-  <g clip-path="url(#clip0_7960_43945)">
-    <rect class="background" width="180" height="180" rx="37" />
-    <g style="transform: scale(95%); transform-origin: center">
-      <path class="foreground"
-        d="M101.141 53H136.632C151.023 53 162.689 64.6662 162.689 79.0573V112.904H148.112V79.0573C148.112 78.7105 148.098 78.3662 148.072 78.0251L112.581 112.898C112.701 112.902 112.821 112.904 112.941 112.904H148.112V126.672H112.941C98.5504 126.672 86.5638 114.891 86.5638 100.5V66.7434H101.141V100.5C101.141 101.15 101.191 101.792 101.289 102.422L137.56 66.7816C137.255 66.7563 136.945 66.7434 136.632 66.7434H101.141V53Z" />
-      <path class="foreground"
-        d="M65.2926 124.136L14 66.7372H34.6355L64.7495 100.436V66.7372H80.1365V118.47C80.1365 126.278 70.4953 129.958 65.2926 124.136Z" />
-    </g>
-  </g>
   <defs>
-    <clipPath id="clip0_7960_43945">
-      <rect width="180" height="180" fill="white" />
-    </clipPath>
+    <linearGradient id="bg" x1="20" y1="14" x2="162" y2="168" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="accent" x1="40" y1="38" x2="144" y2="138" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4ADE80" />
+      <stop offset="1" stop-color="#22C55E" />
+    </linearGradient>
+    <linearGradient id="signal" x1="54" y1="120" x2="142" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A" />
+      <stop offset="1" stop-color="#F59E0B" />
+    </linearGradient>
+    <filter id="glow" x="18" y="26" width="144" height="116" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+    </filter>
   </defs>
+  <rect width="180" height="180" rx="38" fill="url(#bg)" />
+  <circle cx="142" cy="38" r="22" fill="#4ADE80" fill-opacity="0.12" />
+  <circle cx="40" cy="146" r="18" fill="#F59E0B" fill-opacity="0.08" />
+  <path
+    d="M42 52L59 128L90 80L121 128L138 52"
+    stroke="url(#accent)"
+    stroke-width="14"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
+  <path
+    d="M50 118C64 104 76 96 91 89C106 82 121 68 136 48"
+    stroke="url(#signal)"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+  <path d="M126 48H136V58" stroke="url(#signal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
