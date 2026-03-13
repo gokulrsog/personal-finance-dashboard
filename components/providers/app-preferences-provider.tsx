@@ -168,6 +168,20 @@ export function AppPreferencesProvider({ children }: { children: React.ReactNode
       return
     }
 
+    const existingNotification = dedupeKey
+      ? notifications.find((notification) => notification.dedupeKey === dedupeKey)
+      : undefined
+
+    const shouldShowToast =
+      !silent &&
+      preferences.notificationsEnabled &&
+      (
+        !existingNotification ||
+        existingNotification.title !== title ||
+        existingNotification.description !== description ||
+        existingNotification.kind !== kind
+      )
+
     const nextNotification: AppNotification = {
       id: createNotificationId(),
       title,
@@ -201,7 +215,7 @@ export function AppPreferencesProvider({ children }: { children: React.ReactNode
       return [nextNotification, ...current].slice(0, 25)
     })
 
-    if (!silent && preferences.notificationsEnabled) {
+    if (shouldShowToast) {
       toast({
         title,
         description,

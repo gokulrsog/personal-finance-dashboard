@@ -5,8 +5,9 @@ import * as React from 'react'
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast'
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 3
+const TOAST_REMOVE_DELAY = 1000
+const DEFAULT_TOAST_DURATION = 4000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -69,7 +70,7 @@ export const reducer = (state: State, action: Action): State => {
     case 'ADD_TOAST':
       return {
         ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+        toasts: [action.toast, ...state.toasts.filter((toast) => toast.id !== action.toast.id)].slice(0, TOAST_LIMIT),
       }
 
     case 'UPDATE_TOAST':
@@ -107,11 +108,23 @@ export const reducer = (state: State, action: Action): State => {
     }
     case 'REMOVE_TOAST':
       if (action.toastId === undefined) {
+        toastTimeouts.forEach((timeout) => {
+          clearTimeout(timeout)
+        })
+        toastTimeouts.clear()
+
         return {
           ...state,
           toasts: [],
         }
       }
+
+      const timeout = toastTimeouts.get(action.toastId)
+      if (timeout) {
+        clearTimeout(timeout)
+        toastTimeouts.delete(action.toastId)
+      }
+
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
@@ -147,6 +160,7 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
+      duration: props.duration ?? DEFAULT_TOAST_DURATION,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
@@ -172,7 +186,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [])
 
   return {
     ...state,
