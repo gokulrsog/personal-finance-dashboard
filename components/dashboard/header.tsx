@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { signOut } from "next-auth/react"
-import { Bell, CircleHelp, LogOut, Menu, Settings } from "lucide-react"
+import { Bell, CircleHelp, LogOut, Menu, Settings, X } from "lucide-react"
 import type { PageType } from "@/components/main-app"
 import { getInitials, type UserProfile } from "@/lib/finance"
 import { useAppPreferences } from "@/components/providers/app-preferences-provider"
@@ -67,6 +67,7 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
     unreadNotificationCount,
     markAllNotificationsRead,
     clearNotifications,
+    removeNotification,
   } = useAppPreferences()
 
   useEffect(() => {
@@ -78,19 +79,47 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
     let isMounted = true
 
     async function loadProfile() {
-      const response = await fetch("/api/users/profile", { cache: "no-store" })
-      if (!response.ok) return
+      try {
+        const response = await fetch("/api/users/profile", {
+          cache: "no-store",
+          credentials: "include",
+        })
 
-      const data = await response.json()
-      if (isMounted) {
-        setProfile(data)
+        if (!response.ok) {
+          if (isMounted) {
+            setProfile(null)
+          }
+          return
+        }
+
+        const data = await response.json()
+        if (isMounted) {
+          setProfile(data)
+        }
+      } catch {
+        if (isMounted) {
+          setProfile(null)
+        }
       }
     }
 
     loadProfile()
 
+    const handleFocus = () => {
+      loadProfile()
+    }
+
+    const handleProfileUpdated = () => {
+      loadProfile()
+    }
+
+    window.addEventListener("focus", handleFocus)
+    window.addEventListener("wealth-track:profile-updated", handleProfileUpdated)
+
     return () => {
       isMounted = false
+      window.removeEventListener("focus", handleFocus)
+      window.removeEventListener("wealth-track:profile-updated", handleProfileUpdated)
     }
   }, [])
 
@@ -103,8 +132,10 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-6 py-4">
       <div className="flex items-center gap-4">
-        <button 
+        <button
+          type="button"
           onClick={onMenuClick}
+          aria-label="Open menu"
           className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg hover:bg-secondary transition-colors"
         >
           <Menu className="h-5 w-5 text-muted-foreground" />
@@ -122,11 +153,15 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
           <>
             <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
               <PopoverTrigger asChild>
-                <button className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary">
+                <button
+                  type="button"
+                  aria-label="Open notifications"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary"
+                >
                   <Bell className="h-5 w-5 text-muted-foreground" />
                   {unreadNotificationCount > 0 ? (
-                    <span className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                      {Math.min(unreadNotificationCount, 9)}
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+                      {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                     </span>
                   ) : null}
                 </button>
@@ -163,7 +198,17 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
                             <p className="text-sm font-medium text-foreground">{notification.title}</p>
                             <p className="mt-1 text-sm text-muted-foreground">{notification.description}</p>
                           </div>
-                          <span className="shrink-0 text-xs text-muted-foreground">{formatNotificationTime(notification.createdAt)}</span>
+                          <div className="flex shrink-0 items-start gap-2">
+                            <span className="text-xs text-muted-foreground">{formatNotificationTime(notification.createdAt)}</span>
+                            <button
+                              type="button"
+                              aria-label="Remove notification"
+                              onClick={() => removeNotification(notification.id)}
+                              className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -174,7 +219,11 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/60 to-primary text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02]">
+                <button
+                  type="button"
+                  aria-label="Open profile menu"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/60 to-primary text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02]"
+                >
                   {getInitials(profile?.name)}
                 </button>
               </DropdownMenuTrigger>
@@ -204,10 +253,18 @@ export function Header({ currentPage, onNavigate, onMenuClick }: HeaderProps) {
           </>
         ) : (
           <>
-            <button className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary" aria-hidden="true">
+            <button
+              type="button"
+              className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary"
+              aria-hidden="true"
+            >
               <Bell className="h-5 w-5 text-muted-foreground" />
             </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/60 to-primary text-sm font-semibold text-primary-foreground" aria-hidden="true">
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/60 to-primary text-sm font-semibold text-primary-foreground"
+              aria-hidden="true"
+            >
               {getInitials(profile?.name)}
             </button>
           </>

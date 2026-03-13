@@ -52,7 +52,11 @@ export function SettingsPage() {
 
       try {
         const response = await fetch("/api/users/profile", { cache: "no-store" })
-        const payload = await response.json()
+        const payload = await response.json().catch(() => null)
+
+        if (!response.ok) {
+          throw new Error((payload as { error?: string } | null)?.error || "Unable to load profile")
+        }
 
         if (!isMounted) return
         setProfile(payload)
@@ -91,6 +95,9 @@ export function SettingsPage() {
       }
 
       setProfile(payload)
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("wealth-track:profile-updated"))
+      }
       setStatusMessage("Profile updated.")
     } catch (error) {
       console.error(error)
