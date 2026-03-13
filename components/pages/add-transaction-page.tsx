@@ -5,7 +5,6 @@ import React from "react"
 import { useEffect, useState } from "react"
 import {
   ArrowLeft,
-  DollarSign,
   Calendar,
   FileText,
   CreditCard,
@@ -41,7 +40,19 @@ export function AddTransactionPage({ onNavigate }: AddTransactionPageProps) {
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const { addNotification, formatCurrency } = useAppPreferences()
+  const { addNotification, formatCurrency, selectedCurrency } = useAppPreferences()
+
+  const currencySymbol =
+    new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: selectedCurrency,
+      currencyDisplay: "narrowSymbol",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+      .formatToParts(0)
+      .find((part) => part.type === "currency")
+      ?.value ?? selectedCurrency
 
   const categories = type === "income" ? incomeCategories : expenseCategories
 
@@ -175,7 +186,9 @@ export function AddTransactionPage({ onNavigate }: AddTransactionPageProps) {
             Amount
           </Label>
           <div className="relative">
-            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
+              {currencySymbol}
+            </span>
             <Input
               id="amount"
               type="number"

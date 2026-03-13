@@ -123,7 +123,19 @@ export function TransactionsPage() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [formState, setFormState] = useState<TransactionFormState>(defaultFormState)
   const [saving, setSaving] = useState(false)
-  const { addNotification, formatCurrency } = useAppPreferences()
+  const { addNotification, formatCurrency, selectedCurrency } = useAppPreferences()
+
+  const currencySymbol =
+    new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: selectedCurrency,
+      currencyDisplay: "narrowSymbol",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+      .formatToParts(0)
+      .find((part) => part.type === "currency")
+      ?.value ?? selectedCurrency
 
   useEffect(() => {
     fetchTransactions()
@@ -436,7 +448,12 @@ export function TransactionsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-amount">Amount</Label>
-                <Input id="edit-amount" type="number" min="0" step="0.01" value={formState.amount} onChange={(event) => setFormState((current) => ({ ...current, amount: event.target.value }))} required />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                    {currencySymbol}
+                  </span>
+                  <Input id="edit-amount" type="number" min="0" step="0.01" value={formState.amount} onChange={(event) => setFormState((current) => ({ ...current, amount: event.target.value }))} className="pl-8" required />
+                </div>
               </div>
             </div>
 
