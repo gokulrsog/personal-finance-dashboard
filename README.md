@@ -17,7 +17,7 @@ A modern, professional personal finance management application built with Next.j
 - **Professional UI** - Built with Radix UI components and Tailwind CSS
 
 ### 💾 Backend & Database
-- **Prisma ORM** - SQLite database with type-safe, automatic schema migrations
+- **Prisma ORM + Supabase Postgres** - Type-safe database access with a hosted PostgreSQL backend
 - **Database Schema** - Users, Transactions, Budgets, Goals, and ChatMessages tables
 - **RESTful API Routes** - Full CRUD operations for all financial data
 - **Authentication** - NextAuth.js integration with credential-based login
@@ -58,8 +58,9 @@ A modern, professional personal finance management application built with Next.j
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 16+ 
+- Node.js 20+
 - npm or pnpm
+- Supabase project
 - Anthropic API key (for AI features)
 
 ### Installation
@@ -72,16 +73,18 @@ A modern, professional personal finance management application built with Next.j
 2. **Set Environment Variables**
    Create `.env.local` file:
    ```
-   DATABASE_URL="postgresql://..."
-   DIRECT_URL="postgresql://..."
-   NEXTAUTH_SECRET="your-secret-key-change-this-in-production"
+   DATABASE_URL="postgresql://postgres.<project-ref>:<password>@<region>.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&connection_limit=1"
+   DIRECT_URL="postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require"
+   NEXTAUTH_SECRET="generate-a-random-64-char-secret"
    NEXTAUTH_URL="http://localhost:3000"
+   ANTHROPIC_MODEL="claude-sonnet-4-5"
    ANTHROPIC_API_KEY="sk-ant-..."
    ```
 
 3. **Initialize Database**
    ```bash
-   npx prisma migrate dev
+   npx prisma generate
+   npx prisma db push
    ```
 
 4. **Start Development Server**
@@ -212,6 +215,7 @@ npx prisma studio  # Open Prisma Studio UI
 - Database queries use Prisma's parameterized queries to prevent SQL injection
 - Environment variables store sensitive data
 - User data is isolated by user ID
+- This app connects to Supabase through Prisma, so you do not need `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, or the Supabase service role key for the current architecture
 
 ## 🚀 Deployment Instructions
 
@@ -219,59 +223,53 @@ npx prisma studio  # Open Prisma Studio UI
 
 1. Push code to GitHub
 2. Connect repository to Vercel
-3. Add environment variables in Vercel dashboard:
-   - `DATABASE_URL` (use PostgreSQL for production)
-   - `NEXTAUTH_SECRET` (generate with `openssl rand -base64 32`)
-   - `NEXTAUTH_URL` (your deployed URL)
-   - `ANTHROPIC_API_KEY`
-
-4. Deploy!
-
-### Deploy to Netlify (Supabase)
-
-1. Push code to GitHub
-2. Create a new site in Netlify from your GitHub repo
-3. Ensure Netlify uses the build command from `netlify.toml`:
-   - `npx prisma generate && npm run build`
-4. Add environment variables in Netlify dashboard:
-   - `DATABASE_URL` (Supabase Postgres URL; preferably pooled URL)
-   - `DIRECT_URL` (Supabase direct Postgres URL)
+3. In Vercel Project Settings -> Environment Variables, add:
+   - `DATABASE_URL`
+   - `DIRECT_URL`
    - `NEXTAUTH_SECRET`
-   - `NEXTAUTH_URL` (your Netlify site URL)
+   - `NEXTAUTH_URL`
    - `ANTHROPIC_API_KEY`
    - `ANTHROPIC_MODEL`
-5. Deploy site
+4. Set `NEXTAUTH_URL` to your production Vercel domain, for example `https://wealth-track.vercel.app`
+5. Deploy
 
-Note: If your existing schema started on SQLite, run `npx prisma db push` once against Supabase to initialize tables quickly.
+### Supabase Setup
 
-### For Production Database
-
-Replace SQLite with PostgreSQL:
-
-1. Create PostgreSQL database
-2. Update `DATABASE_URL` in `.env.local`:
-   ```
-   DATABASE_URL="postgresql://user:password@localhost:5432/finance_tracker"
-   DIRECT_URL="postgresql://user:password@localhost:5432/finance_tracker"
-   ```
-3. Update `prisma/schema.prisma`:
-   ```prisma
-   datasource db {
-     provider  = "postgresql"
-     url       = env("DATABASE_URL")
-     directUrl = env("DIRECT_URL")
-   }
-   ```
-4. Run migrations:
+1. Create a Supabase project
+2. In Supabase, click `Connect`
+3. Copy the `Transaction pooler` connection string:
+   - use this as `DATABASE_URL`
+   - it usually uses port `6543`
+4. Copy the `Direct connection` connection string:
+   - use this as `DIRECT_URL`
+   - it usually uses port `5432`
+5. If your password contains `@`, encode it as `%40`
+6. Run this once against the empty Supabase database:
    ```bash
-   npx prisma migrate deploy
+   npx prisma db push
    ```
+
+### Where To Get Each Key
+
+- `DATABASE_URL`:
+  Supabase -> Connect -> Transaction pooler
+- `DIRECT_URL`:
+  Supabase -> Connect -> Direct connection
+- `NEXTAUTH_SECRET`:
+  Generate it yourself with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+- `NEXTAUTH_URL`:
+  Local: `http://localhost:3000`
+  Production: your Vercel domain
+- `ANTHROPIC_API_KEY`:
+  Anthropic Console -> API Keys
+- `ANTHROPIC_MODEL`:
+  `claude-sonnet-4-5`
 
 ## 📝 Technologies Used
 
 - **Frontend**: Next.js 16, React 19, TypeScript
 - **UI Framework**: Tailwind CSS, Radix UI
-- **Database**: SQLite (dev) / PostgreSQL (prod), Prisma ORM
+- **Database**: Supabase PostgreSQL, Prisma ORM
 - **Authentication**: NextAuth.js
 - **AI**: Anthropic Claude API
 - **Validation**: Zod
